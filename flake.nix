@@ -24,23 +24,38 @@
         inputs.fpFmt.flakeModule
       ];
 
-      flake.nixosImages.piprint = inputs.nixos-generators.nixosGenerate {
-        system = "aarch64-linux";
-        format = "sd-aarch64";
-        specialArgs = {
-          inherit inputs;
-          rk3588 = {
-            inherit (inputs) nixpkgs;
-            pkgsKernel = import inputs.nixpkgs {
-              localSystem = "x86_64-linux";
-              crossSystem = "aarch64-linux";
+      flake = {
+        nixosConfigurations.piprint = inputs.nixpkgs.lib.nixosSystem {
+          specialArgs = {
+            inherit inputs;
+            rk3588 = {
+              inherit (inputs) nixpkgs;
+              pkgsKernel = import inputs.nixpkgs {
+                system = "aarch64-linux";
+              };
             };
           };
+          modules = [./modules];
         };
-        modules = [
-          ./configuration.nix
-          inputs.ff.nixosModules.freedpomFlake
-        ];
+
+        nixosImages.piprint = inputs.nixos-generators.nixosGenerate {
+          system = "aarch64-linux";
+          format = "sd-aarch64";
+          specialArgs = {
+            inherit inputs;
+            rk3588 = {
+              inherit (inputs) nixpkgs;
+              pkgsKernel = import inputs.nixpkgs {
+                localSystem = "x86_64-linux";
+                crossSystem = "aarch64-linux";
+              };
+            };
+          };
+          modules = [
+            ./modules
+            inputs.ff.nixosModules.freedpomFlake
+          ];
+        };
       };
     };
 
