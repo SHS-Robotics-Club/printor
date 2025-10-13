@@ -51,10 +51,7 @@
               };
             };
           };
-          modules = [
-            ./modules
-            inputs.ff.nixosModules.freedpomFlake
-          ];
+          modules = [./modules];
         };
       };
     };
@@ -62,13 +59,12 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
+    flake-parts.url = "github:hercules-ci/flake-parts";
+
+    nixos-rk3588.url = "github:gnull/nixos-rk3588";
+
     fpFmt = {
       url = "github:freedpom/FreedpomFormatter";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    ff = {
-      url = "github:freedpom/FreedpomFlake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -76,9 +72,5 @@
       url = "github:nix-community/nixos-generators";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    flake-parts.url = "github:hercules-ci/flake-parts";
-
-    nixos-rk3588.url = "github:gnull/nixos-rk3588";
   };
 }

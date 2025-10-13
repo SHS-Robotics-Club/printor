@@ -68,7 +68,6 @@
         Environment = ["DISPLAY=:1"];
         Restart = "on-failure";
 
-        #ExecStart = "${pkgs.xterm}/bin/xterm";
         ExecStart = "${pkgs.orca-slicer}/bin/orca-slicer";
       };
     };
