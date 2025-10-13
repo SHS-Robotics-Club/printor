@@ -5,8 +5,7 @@
 }: let
   # Printers are defined as printer-name = ./path/to/config;
   printers = {
-    printer1 = ./configs/printer1/printer.cfg;
-    printer2 = ./configs/printer2/printer.cfg;
+    printer1 = ./testCT/printer.cfg;
   };
 in {
   environment.systemPackages = [pkgs.klipper];
@@ -25,7 +24,7 @@ in {
             StateDirectory = "klipper-%i";
             RuntimeDirectory = "klipper-%i";
             WorkingDirectory = "${pkgs.klipper}/lib";
-            ExecStart = "${pkgs.klipper}/bin/klippy /var/lib/klipper-%i/printer.cfg";
+            ExecStart = "${lib.getExe pkgs.klipper} /var/lib/klipper-%i/printer.cfg";
             Restart = "always";
             RestartSec = 10;
           };
@@ -33,15 +32,28 @@ in {
 
         # Moonraker template unit
         "moonraker@" = {
+          description = "API Server for %i Klipper";
+          after = ["network.target"];
+
+          serviceConfig = {
+            Type = "simple";
+            DynamicUser = true;
+            StateDirectory = "moonraker-%i";
+            RuntimeDirectory = "moonraker-%i";
+            WorkingDirectory = "${pkgs.moonraker}/lib";
+            ExecStart = "${lib.getExe pkgs.python3} ${pkgs.moonraker}/lib/moonraker/moonraker.py -d /var/lib/moonraker-%i -c /var/lib/moonraker-%i/moonraker.cfg";
+            Restart = "always";
+            RestartSec = 10;
+          };
         };
       }
+      # Enable service template unit for each definition in printers
       // lib.mapAttrs' (printerName: _configFile:
         lib.nameValuePair "klipper@${printerName}" {
           wantedBy = ["multi-user.target"];
           overrideStrategy = "asDropin";
         })
       printers;
-    # Enable service template unit for each definition in printers
 
     # Copy each printer.cfg to the from the nix store to /var/lib so it is writeable by klipper
     tmpfiles.rules = lib.mapAttrsToList (printerName: configFile: "C /var/lib/klipper-${printerName}/printer.cfg - - - - ${configFile}") printers;
