@@ -144,15 +144,27 @@ in {
         }) {}
       printers;
 
-    # Copy each printer.cfg to the from the nix store to /var/lib so it is writeable by klipper
-    tmpfiles.rules = lib.flatten (lib.mapAttrsToList (printerName: configs: [
-        "d /var/lib/data-${printerName}/logs 0775 klipper klipper"
-        "d /var/lib/data-${printerName}/gcodes 0775 klipper klipper"
-        "d /var/lib/data-${printerName}/systemd 0775 klipper klipper"
-        "d /var/lib/data-${printerName}/comms 0775 klipper klipper"
-        "C /var/lib/data-${printerName}/config 0775 klipper klipper - ${configs.klipperCfg}"
-      ])
-      printers);
+    # Create some directories and copy printer configs from the nix store to /var/lib so they are writeable by klipper
+    tmpfiles.rules = let
+      navi = pkgs.writeText "navi.json" (builtins.toJSON [
+        {
+          title = "Slicer";
+          href = "/slice/";
+          target = "_blank";
+          position = "90";
+        }
+      ]);
+    in
+      lib.flatten (lib.mapAttrsToList (printerName: configs: [
+          "d /var/lib/data-${printerName}/logs 0775 klipper klipper"
+          "d /var/lib/data-${printerName}/gcodes 0775 klipper klipper"
+          "d /var/lib/data-${printerName}/systemd 0775 klipper klipper"
+          "d /var/lib/data-${printerName}/comms 0775 klipper klipper"
+          "C /var/lib/data-${printerName}/config 0775 klipper klipper - ${configs.klipperCfg}"
+          "d /var/lib/data-${printerName}/config/.theme 0775 klipper klipper"
+          "L+ /var/lib/data-${printerName}/config/.theme/navi.json 0775 klipper klipper - ${navi}"
+        ])
+        printers);
   };
 
   services = {
