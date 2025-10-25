@@ -157,15 +157,24 @@ in {
     in
       lib.flatten (lib.mapAttrsToList (printerName: configs: [
           "d /var/lib/data-${printerName}/logs 0775 klipper klipper"
-          "d /var/lib/data-${printerName}/gcodes 0775 klipper klipper"
           "d /var/lib/data-${printerName}/systemd 0775 klipper klipper"
           "d /var/lib/data-${printerName}/comms 0775 klipper klipper"
           "C /var/lib/data-${printerName}/config 0775 klipper klipper - ${configs.klipperCfg}"
           "d /var/lib/data-${printerName}/config/.theme 0775 klipper klipper"
           "L+ /var/lib/data-${printerName}/config/.theme/navi.json 0775 klipper klipper - ${navi}"
         ])
-        printers);
+        printers)
+      ++ [
+        "d /var/lib/data-printers-shared/gcodes 0775 klipper klipper"
+      ];
   };
+
+  fileSystems = lib.mapAttrs' (printerName: _:
+    lib.nameValuePair "/var/lib/data-${printerName}/gcodes" {
+      device = "/var/lib/data-printers-shared/gcodes";
+      options = ["bind"];
+    })
+  printers;
 
   services = {
     # Ensure klipper has access to relevant serial devices
