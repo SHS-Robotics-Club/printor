@@ -7,12 +7,12 @@
   configDir = ../printerConfigs;
 
   # Filter ./config directory for directories containing a printer.cfg file, return a list
-  printerNames = lib.attrNames (lib.filterAttrs (name: type: (type == "directory") && ((builtins.readDir "${configDir}/${name}/klipper") ? "printer.cfg")) (builtins.readDir configDir));
+  printerNames = lib.attrNames (lib.filterAttrs (name: type: (type == "directory") && ((builtins.readDir "${configDir}/${name}") ? "printer.cfg")) (builtins.readDir configDir));
 
   # Take list of printer names as input, output attribute set containing printers and paths to their configs, auto generate moonraker config because it doesn't need to change per printer
   printers = lib.mergeAttrsList (lib.imap0 (i: printerName: {
       ${printerName} = {
-        klipperCfg = "${configDir}/${printerName}/printer.cfg";
+        klipperCfg = "${configDir}/${printerName}";
         moonrakerCfg = mkMoonraker printerName (builtins.toString (7125 + i));
         port = 7125 + i;
       };
@@ -150,7 +150,7 @@ in {
         "d /var/lib/data-${printerName}/gcodes 0775 klipper klipper"
         "d /var/lib/data-${printerName}/systemd 0775 klipper klipper"
         "d /var/lib/data-${printerName}/comms 0775 klipper klipper"
-        "C /var/lib/data-${printerName}/config/printer.cfg 0775 klipper klipper - ${configs.klipperCfg}"
+        "C /var/lib/data-${printerName}/config 0775 klipper klipper - ${configs.klipperCfg}"
       ])
       printers);
   };
