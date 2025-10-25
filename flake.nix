@@ -25,7 +25,7 @@
       ];
 
       flake = {
-        nixosConfigurations.piprint = inputs.nixpkgs.lib.nixosSystem {
+        nixosConfigurations.printor = inputs.nixpkgs.lib.nixosSystem {
           specialArgs = {
             inherit inputs;
             rk3588 = {
@@ -38,7 +38,7 @@
           modules = [./modules];
         };
 
-        nixosImages.piprint = inputs.nixos-generators.nixosGenerate {
+        nixosImages.printor = inputs.nixos-generators.nixosGenerate {
           system = "aarch64-linux";
           format = "sd-aarch64";
           specialArgs = {

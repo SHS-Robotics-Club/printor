@@ -3,21 +3,25 @@
   pkgs,
   ...
 }: let
+  # Printer config directory relative to this file
+  configDir = ../printerConfigs;
+
   # Filter ./config directory for directories containing a printer.cfg file, return a list
-  printerNames = lib.attrNames (lib.filterAttrs (name: type: (type == "directory") && ((builtins.readDir ./configs/${name}/klipper) ? "printer.cfg")) (builtins.readDir ./configs));
+  printerNames = lib.attrNames (lib.filterAttrs (name: type: (type == "directory") && ((builtins.readDir "${configDir}/${name}/klipper") ? "printer.cfg")) (builtins.readDir configDir));
 
   # Take list of printer names as input, output attribute set containing printers and paths to their configs, auto generate moonraker config because it doesn't need to change per printer
   printers = lib.mergeAttrsList (lib.imap0 (i: printerName: {
       ${printerName} = {
-        klipperCfg = "./configs/${printerName}/printer.cfg";
+        klipperCfg = "${configDir}/${printerName}/printer.cfg";
         moonrakerCfg = mkMoonraker printerName (builtins.toString (7125 + i));
+        port = 7125 + i;
       };
     })
     printerNames);
 
   # Template moonraker config
   mkMoonraker = printerName: port:
-    pkgs.writeText "moonraker.conf" ''
+    pkgs.writeText "moonraker-${printerName}.conf" ''
       [server]
       host: 0.0.0.0
       port: ${port}
@@ -156,21 +160,18 @@ in {
     udev.extraRules = ''
       SUBSYSTEM=="tty", ATTRS{id_vendor}=="Klipper", MODE="0660", GROUP="dialout"
     '';
+
     # Enable mainsail with fixed moonraker instances
     mainsail = {
       enable = true;
       nginx.locations."=/config.json".alias = pkgs.writeText "config.json" (builtins.toJSON {
         instancesDB = "json";
-        instances = [
-          {
+        instances =
+          lib.mapAttrsToList (_: config: {
             hostname = "localhost";
-            port = "7125";
-          }
-          {
-            hostname = "localhost";
-            port = "7126";
-          }
-        ];
+            inherit (config) port;
+          })
+          printers;
       });
     };
   };
