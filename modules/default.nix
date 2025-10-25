@@ -6,14 +6,9 @@
     ./nginx.nix
   ];
 
+  # Administrative user
   users = {
     users = {
-      # User for orcaslicer services
-      printman = {
-        isNormalUser = true;
-        createHome = true;
-      };
-      # Administrative user
       sc = {
         isNormalUser = true;
         hashedPassword = "$y$j9T$EadXuwn3fN97sHqIT734U1$Lw9ovopcJ8iPKlSot5eSOSid/SIwF273px8jZNNYfe1";
@@ -21,11 +16,6 @@
       };
     };
   };
-
-  # Create $XDG_CONFIG_HOME so orcaslicer runs
-  systemd.tmpfiles.rules = [
-    "d /home/printman/.config 0750 printman users"
-  ];
 
   # Enable sshd and open port 22
   services = {

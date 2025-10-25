@@ -7,68 +7,82 @@
     tigervnc
   ];
 
-  systemd.services = {
-    websockify = {
-      description = "Websockify VNC Bridge";
-      after = ["orcaslicer-vnc.service"];
-      requires = ["orcaslicer-vnc.service"];
-      wantedBy = ["multi-user.target"];
+  # Create static user for orcaslicer
+  users.users.printman = {
+    isNormalUser = true;
+    createHome = true;
+  };
 
-      serviceConfig = {
-        Type = "simple";
-        DynamicUser = true;
-        Restart = "on-failure";
-        RestartSec = 5;
+  systemd = {
+    # Create $XDG_CONFIG_HOME so orcaslicer runs
+    tmpfiles.rules = [
+      "d /home/printman/.config 0750 printman users"
+    ];
 
-        ExecStart = ''
-          ${pkgs.python3Packages.websockify}/bin/websockify \
-            --heartbeat=30 \
-            127.0.0.1:6080 localhost:5901
-        '';
+    # Services for orcaslicer and vnc server
+    services = {
+      websockify = {
+        description = "Websockify VNC Bridge";
+        after = ["orcaslicer-vnc.service"];
+        requires = ["orcaslicer-vnc.service"];
+        wantedBy = ["multi-user.target"];
+
+        serviceConfig = {
+          Type = "simple";
+          DynamicUser = true;
+          Restart = "on-failure";
+          RestartSec = 5;
+
+          ExecStart = ''
+            ${pkgs.python3Packages.websockify}/bin/websockify \
+              --heartbeat=30 \
+              127.0.0.1:6080 localhost:5901
+          '';
+        };
       };
-    };
-    orcaslicer-vnc = {
-      description = "OrcaSlicer VNC Service";
-      after = ["network.target"];
-      wantedBy = ["multi-user.target"];
+      orcaslicer-vnc = {
+        description = "OrcaSlicer VNC Service";
+        after = ["network.target"];
+        wantedBy = ["multi-user.target"];
 
-      serviceConfig = {
-        User = "printman";
-        Group = "users";
-        Type = "simple";
-        Environment = ["DISPLAY=:1"];
-        Restart = "on-failure";
-        RestartSec = 5;
+        serviceConfig = {
+          User = "printman";
+          Group = "users";
+          Type = "simple";
+          Environment = ["DISPLAY=:1"];
+          Restart = "on-failure";
+          RestartSec = 5;
 
-        ExecStart = ''
-          ${pkgs.tigervnc}/bin/Xvnc :1 \
-            -geometry 1920x1080 \
-            -depth 16 \
-            -SecurityTypes None \
-            -AlwaysShared \
-            -AcceptKeyEvents \
-            -AcceptPointerEvents \
-            -AcceptCutText \
-            -SendCutText \
-            -fp ${pkgs.xorg.fontmiscmisc}/lib/X11/fonts/misc/
-        '';
+          ExecStart = ''
+            ${pkgs.tigervnc}/bin/Xvnc :1 \
+              -geometry 1920x1080 \
+              -depth 16 \
+              -SecurityTypes None \
+              -AlwaysShared \
+              -AcceptKeyEvents \
+              -AcceptPointerEvents \
+              -AcceptCutText \
+              -SendCutText \
+              -fp ${pkgs.xorg.fontmiscmisc}/lib/X11/fonts/misc/
+          '';
+        };
       };
-    };
 
-    orcaslicer-app = {
-      description = "OrcaSlicer Application";
-      after = ["orcaslicer-vnc.service"];
-      requires = ["orcaslicer-vnc.service"];
-      wantedBy = ["multi-user.target"];
+      orcaslicer-app = {
+        description = "OrcaSlicer Application";
+        after = ["orcaslicer-vnc.service"];
+        requires = ["orcaslicer-vnc.service"];
+        wantedBy = ["multi-user.target"];
 
-      serviceConfig = {
-        User = "printman";
-        Group = "users";
-        Type = "simple";
-        Environment = ["DISPLAY=:1"];
-        Restart = "on-failure";
+        serviceConfig = {
+          User = "printman";
+          Group = "users";
+          Type = "simple";
+          Environment = ["DISPLAY=:1"];
+          Restart = "on-failure";
 
-        ExecStart = "${pkgs.orca-slicer}/bin/orca-slicer";
+          ExecStart = "${pkgs.orca-slicer}/bin/orca-slicer";
+        };
       };
     };
   };
