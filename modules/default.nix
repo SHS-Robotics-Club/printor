@@ -2,8 +2,9 @@
   imports = [
     inputs.nixos-rk3588.nixosModules.boards.orangepi5.sd-image
     inputs.nixos-rk3588.nixosModules.boards.orangepi5.core
-    ./orcaslicer.nix
-    ./nginx.nix
+    ./klipper.nix
+    # ./orcaslicer.nix
+    # ./nginx.nix
   ];
 
   # Administrative user
@@ -11,7 +12,7 @@
     users = {
       sc = {
         isNormalUser = true;
-        hashedPassword = "$y$j9T$EadXuwn3fN97sHqIT734U1$Lw9ovopcJ8iPKlSot5eSOSid/SIwF273px8jZNNYfe1";
+        hashedPassword = "$y$j9T$vCBf5Z4RBPNmGHaU5lbJS/$/0k7JPhfaC3KDF7COdu6ghLW1l3kNsepGqhqZ.KYIq4";
         extraGroups = ["wheel"];
       };
     };
@@ -24,6 +25,8 @@
       openFirewall = true;
     };
   };
+
+  networking.firewall.allowedTCPPorts = [80];
 
   nixpkgs = {
     hostPlatform = "aarch64-linux";
